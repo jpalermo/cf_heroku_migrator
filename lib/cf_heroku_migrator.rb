@@ -1,10 +1,9 @@
-require 'rubygems'
-gem "highline"
-
 require "highline/import"
 require "heroku-api"
 require "json"
 require "cf_heroku_migrator/version"
+require "sshkey"
+require "tmpdir"
 
 class CfMigrator
   def self.migrate
@@ -15,7 +14,7 @@ class CfMigrator
 
     apps = heroku.get_apps.body.collect { |app| app["name"] }
 
-    heroku_app_name = ask("Which app do you want to import? (#{apps.join(", ")}):  ")
+    heroku_app_name = ask("Which app do you want to import? (#{apps.join(", ")}):  ") { |q| q.default = apps.first }
 
     config_vars = heroku.get_config_vars(heroku_app_name).body
     database_url = config_vars["DATABASE_URL"]
@@ -29,8 +28,24 @@ class CfMigrator
 
       raise "KEY NOT FOUND" unless keys_to_keep.length == config_vars.length
     end
-    say "Pushing app to CF"
-    `cf push #{heroku_app_name} --no-start --random-route`
+
+    ssh_key = SSHKey.generate
+    heroku.post_key(ssh_key.ssh_public_key)
+
+    Dir.mktmpdir("app") do |dir|
+      Dir.chdir(dir) do
+        File.open("private_key", "w") {|f| f << ssh_key.private_key.to_s }
+        File.chmod(0600, "private_key")
+        `ssh-add private_key && git clone git@heroku.com:#{heroku_app_name}.git`
+
+        heroku.delete_key(ssh_key.ssh_public_key)
+
+        Dir.chdir(heroku_app_name) do
+          say "Pushing app to CF"
+          `cf push #{heroku_app_name} --no-start --random-route`
+        end
+      end
+    end
 
     say "Creating a DB"
     `cf create-service elephantsql turtle #{heroku_app_name}-db`

@@ -18,6 +18,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "heroku-api"
   spec.add_dependency "highline"
+  spec.add_dependency "sshkey"
   spec.add_development_dependency "bundler", "~> 1.6"
   spec.add_development_dependency "rake"
 end
