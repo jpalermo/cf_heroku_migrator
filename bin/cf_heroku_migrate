@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+require 'cf_heroku_migrator'
+CfMigrator.migrate
