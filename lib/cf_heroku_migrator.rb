@@ -59,7 +59,7 @@ class CfMigrator
 
 
     say "Migrating DB from Heroku to CF"
-    `pg_dump #{database_url} | psql -q #{elephantsql_url}`
+    `pg_dump #{database_url} | psql -q #{elephantsql_url} 2> /dev/null`
 
     config_vars.each do |k, v|
       say "Setting ENV: #{k}"
