@@ -21,7 +21,7 @@ class CfMigrator
     config_vars_to_exclude = %w(PGBACKUPS_URL BUNDLE_WITHOUT LOGGING_EXPANDED_UPGRADE DATABASE_URL APP_NAME COMMIT_HASH URL HEROKU_POSTGRESQL_SILVER_URL LAST_GIT_BY RACK_ENV LANG CONSOLE_AUTH STACK)
     config_vars.delete_if { |key, value| config_vars_to_exclude.include? key }
 
-    config_vars_keys_to_import = ask("Which config vars do you want to import? Space separate them, or press Enter to select all. (#{config_vars.keys.join(", ")}):  ")
+    config_vars_keys_to_import = ask("Which config vars do you want to import? Space separate them, or press Enter to select all:  ") { |q| q.default = config_vars.keys.join(" ") }
     if config_vars_keys_to_import.length > 0
       keys_to_keep = config_vars_keys_to_import.downcase.split(" ")
       config_vars.select! { |key, value| keys_to_keep.include? key.downcase }
